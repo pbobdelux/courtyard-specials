@@ -1,9 +1,10 @@
 import crypto from "crypto";
 import { after } from "next/server";
-import { getSpecial, getDraft } from "@/lib/store";
+import { getSpecial, getDraft, kvGet, kvSet } from "@/lib/store";
 import { normalizeSpecial, todayInCentral, RESTAURANT_NAME } from "@/lib/menu";
 import { aiConfigured } from "@/lib/ai";
-import { generateProof, publishDraft } from "@/lib/proof";
+import { generateProof, publishDraft, runAgentTurn } from "@/lib/proof";
+import { downloadSlackFile } from "@/lib/slackapi";
 
 export const dynamic = "force-dynamic";
 
@@ -85,18 +86,34 @@ export async function POST(req) {
 
     if (body.type === "event_callback") {
       const ev = body.event || {};
-      // Ignore the bot's own messages to avoid loops.
+
+      // De-dupe: Slack retries events; only process each event id once.
+      if (body.event_id) {
+        const seen = await kvGet(`evt:${body.event_id}`);
+        if (seen) return new Response("", { status: 200 });
+        await kvSet(`evt:${body.event_id}`, 1);
+      }
+
+      // @mention → full conversational agent (text + any photos, with thread memory).
       if (ev.type === "app_mention" && !ev.bot_id) {
-        const instruction = (ev.text || "").replace(/<@[^>]+>/g, "").trim();
-        if (instruction) {
-          after(async () => {
-            try {
-              await generateProof({ instruction, channel: ev.channel });
-            } catch (e) {
-              console.error("app_mention proof failed:", e.message);
+        const text = (ev.text || "").replace(/<@[^>]+>/g, "").trim();
+        const channel = ev.channel;
+        const threadTs = ev.thread_ts || ev.ts;
+        const imageFiles = (ev.files || []).filter((f) =>
+          (f.mimetype || "").startsWith("image/")
+        );
+        after(async () => {
+          try {
+            const images = [];
+            for (const f of imageFiles.slice(0, 4)) {
+              const data = await downloadSlackFile(f.url_private_download || f.url_private);
+              if (data) images.push({ media_type: f.mimetype, data });
             }
-          });
-        }
+            await runAgentTurn({ text, images, channel, threadTs });
+          } catch (e) {
+            console.error("agent turn failed:", e.message);
+          }
+        });
       }
       return new Response("", { status: 200 }); // ack within 3s
     }
