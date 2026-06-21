@@ -5,6 +5,7 @@ import { normalizeSpecial, todayInCentral, RESTAURANT_NAME } from "@/lib/menu";
 import { aiConfigured } from "@/lib/ai";
 import { generateProof, publishDraft, runAgentTurn } from "@/lib/proof";
 import { downloadSlackFile } from "@/lib/slackapi";
+import { recordDecision } from "@/lib/learning";
 
 export const dynamic = "force-dynamic";
 
@@ -141,6 +142,7 @@ export async function POST(req) {
       if (action === "approve_proof") {
         const s = await publishDraft();
         after(async () => {
+          if (s) await recordDecision({ type: "approved", board: s });
           await fetch(responseUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -172,6 +174,8 @@ export async function POST(req) {
       if (feedback && channel) {
         after(async () => {
           try {
+            // Learn from the rejection (what they didn't like + the correction).
+            await recordDecision({ type: "rejected", board: draft, feedback });
             await generateProof({ instruction: feedback, channel, continueFromDraft: true });
           } catch (e) {
             console.error("feedback revision failed:", e.message);
@@ -195,6 +199,7 @@ export async function POST(req) {
 
   if (text === "approve") {
     const s = await publishDraft();
+    if (s) after(async () => recordDecision({ type: "approved", board: s }));
     return ok({
       response_type: "ephemeral",
       text: s
