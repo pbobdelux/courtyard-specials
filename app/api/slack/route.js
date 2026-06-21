@@ -95,30 +95,35 @@ export async function POST(req) {
         await kvSet(`evt:${body.event_id}`, 1);
       }
 
-      // Talk to the agent via @mention (in a channel thread) OR a direct message.
-      const isMention = ev.type === "app_mention";
-      const isDM = ev.type === "message" && ev.channel_type === "im" && !ev.subtype;
-      if ((isMention || isDM) && !ev.bot_id && ev.user) {
+      // The bot listens in DMs and in any channel it's a member of (e.g. #menu-board):
+      // every human message is a conversational turn — no @mention needed.
+      const isMsg =
+        ev.type === "message" &&
+        ["im", "channel", "group", "mpim"].includes(ev.channel_type) &&
+        !ev.subtype && // skip edits/joins/etc.
+        !ev.bot_id && // skip the bot's own (and other apps') messages
+        ev.user;
+      if (isMsg) {
         const text = (ev.text || "").replace(/<@[^>]+>/g, "").trim();
         const channel = ev.channel;
-        // DM: one ongoing conversation, reply inline. Mention: per-thread, reply in thread.
-        const convoKey = isDM ? `dm:${ev.channel}` : ev.thread_ts || ev.ts;
-        const replyTs = isDM ? undefined : ev.thread_ts || ev.ts;
+        const convoKey = (ev.channel_type === "im" ? "dm:" : "ch:") + ev.channel;
         const imageFiles = (ev.files || []).filter((f) =>
           (f.mimetype || "").startsWith("image/")
         );
-        after(async () => {
-          try {
-            const images = [];
-            for (const f of imageFiles.slice(0, 4)) {
-              const data = await downloadSlackFile(f.url_private_download || f.url_private);
-              if (data) images.push({ media_type: f.mimetype, data });
+        if (text || imageFiles.length) {
+          after(async () => {
+            try {
+              const images = [];
+              for (const f of imageFiles.slice(0, 4)) {
+                const data = await downloadSlackFile(f.url_private_download || f.url_private);
+                if (data) images.push({ media_type: f.mimetype, data });
+              }
+              await runAgentTurn({ text, images, channel, convoKey, replyTs: undefined });
+            } catch (e) {
+              console.error("agent turn failed:", e.message);
             }
-            await runAgentTurn({ text, images, channel, convoKey, replyTs });
-          } catch (e) {
-            console.error("agent turn failed:", e.message);
-          }
-        });
+          });
+        }
       }
       return new Response("", { status: 200 }); // ack within 3s
     }
