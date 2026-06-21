@@ -155,7 +155,7 @@ export async function POST(req) {
       if (feedback && channel) {
         after(async () => {
           try {
-            await generateProof({ instruction: feedback, channel });
+            await generateProof({ instruction: feedback, channel, continueFromDraft: true });
           } catch (e) {
             console.error("feedback revision failed:", e.message);
           }
