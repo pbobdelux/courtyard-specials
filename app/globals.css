@@ -373,6 +373,78 @@ body {
   font-size: 0.95rem;
 }
 
+/* ---------------- ROTATED TV (?rotate=90 / 270) ---------------- */
+/* For TVs whose browser renders landscape but the panel is physically turned
+   90°. We size the board to a portrait box and rotate it to fill the screen. */
+.board-wrap.r90,
+.board-wrap.r270 {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vh;
+  height: 100vw;
+  min-height: 0;
+  transform-origin: top left;
+}
+.board-wrap.r90 {
+  transform: translateX(100vw) rotate(90deg);
+}
+.board-wrap.r270 {
+  transform: translateY(100vh) rotate(-90deg);
+}
+
+/* Fill styling (mirrors portrait) — used for the rotated case. */
+.board-wrap.fill {
+  padding: 1.2vmin;
+}
+.board-wrap.fill .frame {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  border-radius: 2vmin;
+  padding: 2.2vmin;
+}
+.board-wrap.fill .chalk {
+  padding: 6vmin 5.5vmin;
+}
+.board-wrap.fill .holiday-banner {
+  font-size: 5.4vmin;
+  margin-bottom: 2vmin;
+}
+.board-wrap.fill .feat-name {
+  font-size: 9vmin;
+}
+.board-wrap.fill .feat-price {
+  font-size: 7.2vmin;
+}
+.board-wrap.fill .rule {
+  margin: 2.2vmin 0 1vmin;
+}
+.board-wrap.fill .entrees {
+  justify-content: space-evenly;
+  gap: 0;
+}
+.board-wrap.fill .entrees li {
+  font-size: 6.4vmin;
+}
+.board-wrap.fill .e-note {
+  font-size: 3.4vmin;
+}
+.board-wrap.fill .cols {
+  margin-top: 2vmin;
+  padding-top: 3vmin;
+}
+.board-wrap.fill .col-label {
+  font-size: 5.2vmin;
+}
+.board-wrap.fill .col-item {
+  font-size: 4.2vmin;
+}
+.board-wrap.fill .holiday-upcoming {
+  font-size: 3.4vmin;
+  margin-top: 2.5vmin;
+}
+
 /* ---------------- VERTICAL TV (portrait, e.g. 1080x1920) ---------------- */
 /* Fill the whole screen and scale text up so it reads from across the room. */
 @media (orientation: portrait) {

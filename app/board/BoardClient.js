@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 
 // The TV board. Polls every 60s so it updates itself with no one touching the TV.
-export default function BoardClient({ initial }) {
+export default function BoardClient({ initial, rotate }) {
   const [s, setS] = useState(initial);
+  const wrapClass = "board-wrap" + (rotate ? ` fill r${rotate}` : "");
 
   useEffect(() => {
     let alive = true;
@@ -27,7 +28,7 @@ export default function BoardClient({ initial }) {
   }, []);
 
   return (
-    <div className="board-wrap">
+    <div className={wrapClass}>
       <div className="frame">
         <div className="chalk">
           {s.holiday?.today ? (
