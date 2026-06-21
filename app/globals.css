@@ -372,3 +372,59 @@ body {
   border-radius: 999px;
   font-size: 0.95rem;
 }
+
+/* ---------------- VERTICAL TV (portrait, e.g. 1080x1920) ---------------- */
+/* Fill the whole screen and scale text up so it reads from across the room. */
+@media (orientation: portrait) {
+  .board-wrap {
+    height: 100vh;
+    padding: 1.2vmin;
+  }
+  .frame {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: auto;
+    border-radius: 2vmin;
+    padding: 2.2vmin;
+  }
+  .chalk {
+    padding: 6vmin 5.5vmin;
+  }
+  .holiday-banner {
+    font-size: 5.4vmin;
+    margin-bottom: 2vmin;
+  }
+  .feat-name {
+    font-size: 9vmin;
+  }
+  .feat-price {
+    font-size: 7.2vmin;
+  }
+  .rule {
+    margin: 2.2vmin 0 1vmin;
+  }
+  .entrees {
+    justify-content: space-evenly;
+    gap: 0;
+  }
+  .entrees li {
+    font-size: 6.4vmin;
+  }
+  .e-note {
+    font-size: 3.4vmin;
+  }
+  .cols {
+    margin-top: 2vmin;
+    padding-top: 3vmin;
+  }
+  .col-label {
+    font-size: 5.2vmin;
+  }
+  .col-item {
+    font-size: 4.2vmin;
+  }
+  .holiday-upcoming {
+    font-size: 3.4vmin;
+    margin-top: 2.5vmin;
+  }
+}
