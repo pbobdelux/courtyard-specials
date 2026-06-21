@@ -97,10 +97,13 @@ export async function POST(req) {
 
       // The bot listens in DMs and in any channel it's a member of (e.g. #menu-board):
       // every human message is a conversational turn — no @mention needed.
+      // Allow plain messages AND messages with attachments (subtype "file_share");
+      // skip everything else (edits, joins, deletes, etc.).
+      const okSubtype = !ev.subtype || ev.subtype === "file_share";
       const isMsg =
         ev.type === "message" &&
         ["im", "channel", "group", "mpim"].includes(ev.channel_type) &&
-        !ev.subtype && // skip edits/joins/etc.
+        okSubtype &&
         !ev.bot_id && // skip the bot's own (and other apps') messages
         ev.user;
       if (isMsg) {
