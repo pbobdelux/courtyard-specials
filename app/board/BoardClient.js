@@ -1,11 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { resolveDesign } from "@/lib/themes";
 
 // The TV board. Polls every 60s so it updates itself with no one touching the TV.
 export default function BoardClient({ initial, rotate }) {
   const [s, setS] = useState(initial);
   const wrapClass = "board-wrap" + (rotate ? ` fill r${rotate}` : "");
+
+  const d = resolveDesign(s.design);
+  const wrapStyle = {
+    "--board": d.bg,
+    "--chalk-cream": d.text,
+    "--chalk-blue": d.accent,
+    "--font-caveat": d.headingFont,
+    "--font-hand": d.bodyFont,
+  };
 
   useEffect(() => {
     let alive = true;
@@ -28,8 +38,8 @@ export default function BoardClient({ initial, rotate }) {
   }, []);
 
   return (
-    <div className={wrapClass}>
-      <div className="frame">
+    <div className={wrapClass} style={wrapStyle}>
+      <div className={`frame frame-${d.frame}`}>
         <div className="chalk">
           {s.holiday?.today ? (
             <div className="holiday-banner">

@@ -1,13 +1,13 @@
 :root {
   --wall: #e8d9b5;
   --wall-shadow: #d8c69c;
-  --wood-1: #8a5a2b;
-  --wood-2: #6b4421;
-  --wood-3: #a06a35;
   --board: #14130f;
   --chalk-cream: #efe9d6;
   --chalk-blue: #8fc7e3;
   --chalk-dim: #b9b29a;
+  /* Heading/body font slots — overridden per-design on the board. */
+  --font-caveat: var(--font-script);
+  --font-hand: var(--font-casual);
 }
 
 * {
@@ -40,11 +40,33 @@ body {
   width: min(92vh, 96vw);
   aspect-ratio: 3 / 4;
   border-radius: 14px;
-  padding: 2.4vmin;
-  background: linear-gradient(135deg, var(--wood-3), var(--wood-1) 40%, var(--wood-2));
+  padding: var(--frame-pad, 2.4vmin);
   box-shadow:
     0 2vmin 5vmin rgba(0, 0, 0, 0.45),
     inset 0 0 1vmin rgba(0, 0, 0, 0.4);
+}
+
+/* Frame styles the AI can choose. */
+.frame-wood {
+  background: linear-gradient(135deg, #a06a35, #8a5a2b 40%, #6b4421);
+  --frame-pad: 2.4vmin;
+}
+.frame-gold {
+  background: linear-gradient(135deg, #e7c66b, #b8923f 45%, #8a6a1f);
+  --frame-pad: 1.8vmin;
+}
+.frame-thin {
+  background: var(--chalk-blue);
+  --frame-pad: 0.6vmin;
+}
+.frame-white {
+  background: #ece7da;
+  --frame-pad: 1.2vmin;
+}
+.frame-none {
+  background: transparent;
+  --frame-pad: 0;
+  box-shadow: none;
 }
 
 .chalk {
@@ -52,7 +74,7 @@ body {
   width: 100%;
   background: var(--board);
   border-radius: 6px;
-  box-shadow: inset 0 0 6vmin rgba(0, 0, 0, 0.85);
+  box-shadow: inset 0 0 5vmin rgba(0, 0, 0, 0.35);
   padding: 4vmin 5vmin;
   display: flex;
   flex-direction: column;
@@ -402,7 +424,7 @@ body {
   height: 100%;
   aspect-ratio: auto;
   border-radius: 2vmin;
-  padding: 2.2vmin;
+  padding: var(--frame-pad, 2.2vmin);
 }
 .board-wrap.fill .chalk {
   padding: 6vmin 5.5vmin;
@@ -457,7 +479,7 @@ body {
     height: 100%;
     aspect-ratio: auto;
     border-radius: 2vmin;
-    padding: 2.2vmin;
+    padding: var(--frame-pad, 2.2vmin);
   }
   .chalk {
     padding: 6vmin 5.5vmin;
