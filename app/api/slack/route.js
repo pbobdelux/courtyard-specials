@@ -95,11 +95,15 @@ export async function POST(req) {
         await kvSet(`evt:${body.event_id}`, 1);
       }
 
-      // @mention → full conversational agent (text + any photos, with thread memory).
-      if (ev.type === "app_mention" && !ev.bot_id) {
+      // Talk to the agent via @mention (in a channel thread) OR a direct message.
+      const isMention = ev.type === "app_mention";
+      const isDM = ev.type === "message" && ev.channel_type === "im" && !ev.subtype;
+      if ((isMention || isDM) && !ev.bot_id && ev.user) {
         const text = (ev.text || "").replace(/<@[^>]+>/g, "").trim();
         const channel = ev.channel;
-        const threadTs = ev.thread_ts || ev.ts;
+        // DM: one ongoing conversation, reply inline. Mention: per-thread, reply in thread.
+        const convoKey = isDM ? `dm:${ev.channel}` : ev.thread_ts || ev.ts;
+        const replyTs = isDM ? undefined : ev.thread_ts || ev.ts;
         const imageFiles = (ev.files || []).filter((f) =>
           (f.mimetype || "").startsWith("image/")
         );
@@ -110,7 +114,7 @@ export async function POST(req) {
               const data = await downloadSlackFile(f.url_private_download || f.url_private);
               if (data) images.push({ media_type: f.mimetype, data });
             }
-            await runAgentTurn({ text, images, channel, threadTs });
+            await runAgentTurn({ text, images, channel, convoKey, replyTs });
           } catch (e) {
             console.error("agent turn failed:", e.message);
           }
