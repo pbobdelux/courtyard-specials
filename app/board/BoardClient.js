@@ -6,8 +6,55 @@ import { resolveDesign } from "@/lib/themes";
 // The TV board. Polls every 60s so it updates itself with no one touching the TV.
 export default function BoardClient({ initial, rotate }) {
   const [s, setS] = useState(initial);
-  const wrapClass = "board-wrap" + (rotate ? ` fill r${rotate}` : "");
 
+  // Poll every 60s so the board updates itself with no one touching the TV.
+  useEffect(() => {
+    let alive = true;
+    const load = async () => {
+      try {
+        const r = await fetch("/api/special", { cache: "no-store" });
+        if (r.ok) {
+          const d = await r.json();
+          if (alive) setS(d);
+        }
+      } catch {
+        /* keep showing the last good board */
+      }
+    };
+    const id = setInterval(load, 60000);
+    return () => {
+      alive = false;
+      clearInterval(id);
+    };
+  }, []);
+
+  // Hold a screen wake lock so the TV never dims or sleeps while the board is up.
+  // Re-acquire whenever the page becomes visible again (it drops on tab switch / sleep).
+  useEffect(() => {
+    let lock = null;
+    let cancelled = false;
+    const acquire = async () => {
+      try {
+        if ("wakeLock" in navigator) lock = await navigator.wakeLock.request("screen");
+      } catch {
+        /* unsupported or blocked — device power settings must handle it */
+      }
+    };
+    acquire();
+    const onVisible = () => {
+      if (document.visibilityState === "visible" && !cancelled) acquire();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVisible);
+      try {
+        lock && lock.release();
+      } catch {}
+    };
+  }, []);
+
+  const wrapClass = "board-wrap" + (rotate ? ` fill r${rotate}` : "");
   const d = resolveDesign(s.design);
   const bgImage = s.design?.bgImage || null;
   const wrapStyle = {
@@ -30,26 +77,6 @@ export default function BoardClient({ initial, rotate }) {
       </div>
     );
   }
-
-  useEffect(() => {
-    let alive = true;
-    const load = async () => {
-      try {
-        const r = await fetch("/api/special", { cache: "no-store" });
-        if (r.ok) {
-          const d = await r.json();
-          if (alive) setS(d);
-        }
-      } catch {
-        /* keep showing the last good board */
-      }
-    };
-    const id = setInterval(load, 60000);
-    return () => {
-      alive = false;
-      clearInterval(id);
-    };
-  }, []);
 
   return (
     <div className={wrapClass} style={wrapStyle}>
