@@ -90,18 +90,7 @@ export async function GET(req) {
       ...items.map((x) => h("div", { style: { fontSize: 32, color: text, fontFamily: bodyFam } }, x))
     );
 
-  const board = h(
-    "div",
-    {
-      style: {
-        display: "flex",
-        flexDirection: "column",
-        flex: 1,
-        borderRadius: 18,
-        padding: "58px 66px",
-        ...boardBg,
-      },
-    },
+  const contentChildren = [
     holiday?.today
       ? h(
           "div",
@@ -124,8 +113,25 @@ export async function GET(req) {
           column("Sides", s.sides),
           column("Soup", s.soups)
         )
-      : h("div", {})
-  );
+      : h("div", {}),
+  ];
+
+  let board;
+  if (bgImage) {
+    // AI chalkboard image: overlay text in a readable dark panel, inset within the painted frame.
+    const panel = h(
+      "div",
+      { style: { display: "flex", flexDirection: "column", flex: 1, borderRadius: 18, padding: "52px 58px", backgroundColor: "rgba(0,0,0,0.45)" } },
+      ...contentChildren
+    );
+    board = h("div", { style: { display: "flex", flex: 1, padding: "120px 100px", ...boardBg } }, panel);
+  } else {
+    board = h(
+      "div",
+      { style: { display: "flex", flexDirection: "column", flex: 1, borderRadius: 18, padding: "58px 66px", ...boardBg } },
+      ...contentChildren
+    );
+  }
 
   const element = h(
     "div",
