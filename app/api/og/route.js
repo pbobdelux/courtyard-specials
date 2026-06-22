@@ -35,8 +35,19 @@ export async function GET(req) {
   const wantDraft = new URL(req.url).searchParams.get("draft");
   const stored = wantDraft ? (await getDraft()) || (await getSpecial()) : await getSpecial();
   const s = normalizeSpecial(stored || SAMPLE_SPECIAL);
+
+  // Full AI-generated board → just serve that image directly.
+  if (s.image) {
+    const r = await fetch(s.image);
+    const buf = Buffer.from(await r.arrayBuffer());
+    return new Response(buf, {
+      headers: { "content-type": r.headers.get("content-type") || "image/png", "cache-control": "no-store" },
+    });
+  }
+
   const holiday = getHolidayInfo();
   const d = resolveDesign(s.design);
+  const bgImage = s.design?.bgImage || null;
 
   const [headingData, bodyData] = await Promise.all([loadFont(d.headingTtf), loadFont(d.bodyTtf)]);
   const fonts = [];
@@ -47,7 +58,11 @@ export async function GET(req) {
 
   const { text, accent } = d;
   const isGradient = (d.bg || "").includes("gradient");
-  const boardBg = isGradient ? { backgroundImage: d.bg } : { backgroundColor: d.bg };
+  const boardBg = bgImage
+    ? { backgroundImage: `url(${bgImage})`, backgroundSize: "cover", backgroundPosition: "center" }
+    : isGradient
+      ? { backgroundImage: d.bg }
+      : { backgroundColor: d.bg };
   const frame = FRAME_MAP(accent)[d.frame] || FRAME_MAP(accent).wood;
 
   const entreeRows = s.entrees.map((e) =>

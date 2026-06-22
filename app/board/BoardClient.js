@@ -9,13 +9,27 @@ export default function BoardClient({ initial, rotate }) {
   const wrapClass = "board-wrap" + (rotate ? ` fill r${rotate}` : "");
 
   const d = resolveDesign(s.design);
+  const bgImage = s.design?.bgImage || null;
   const wrapStyle = {
-    "--board": d.bg,
+    "--board": bgImage ? `url(${bgImage}) center/cover no-repeat` : d.bg,
     "--chalk-cream": d.text,
     "--chalk-blue": d.accent,
     "--font-caveat": d.headingFont,
     "--font-hand": d.bodyFont,
   };
+
+  // Full AI-generated board: show that image filling the screen.
+  if (s.image) {
+    return (
+      <div className={wrapClass} style={{ background: "#000" }}>
+        <img
+          src={s.image}
+          alt="Specials board"
+          style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
+        />
+      </div>
+    );
+  }
 
   useEffect(() => {
     let alive = true;
