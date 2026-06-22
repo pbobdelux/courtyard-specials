@@ -56,21 +56,15 @@ export default function BoardClient({ initial, rotate }) {
 
   const wrapClass = "board-wrap" + (rotate ? ` fill r${rotate}` : "");
   const d = resolveDesign(s.design);
-  const bgImage = s.design?.bgImage || null;
   const wrapStyle = {
-    // With an AI background, the chalk area becomes a readable dark panel inset
-    // within the painted frame (the image itself fills the frame below).
-    "--board": bgImage ? "rgba(0,0,0,0.45)" : d.bg,
+    "--board": d.bg,
     "--chalk-cream": d.text,
     "--chalk-blue": d.accent,
     "--font-caveat": d.headingFont,
     "--font-hand": d.bodyFont,
   };
-  const frameStyle = bgImage
-    ? { backgroundImage: `url(${bgImage})`, backgroundSize: "cover", backgroundPosition: "center", padding: "7vmin" }
-    : undefined;
 
-  // Full AI-generated board: show that image filling the screen.
+  // Full AI-generated board (the default): show that image filling the screen.
   if (s.image) {
     return (
       <div className={wrapClass} style={{ background: "#000" }}>
@@ -85,7 +79,7 @@ export default function BoardClient({ initial, rotate }) {
 
   return (
     <div className={wrapClass} style={wrapStyle}>
-      <div className={`frame frame-${d.frame}`} style={frameStyle}>
+      <div className={`frame frame-${d.frame}`}>
         <div className="chalk">
           {s.holiday?.today ? (
             <div className="holiday-banner">

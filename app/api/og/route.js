@@ -47,7 +47,6 @@ export async function GET(req) {
 
   const holiday = getHolidayInfo();
   const d = resolveDesign(s.design);
-  const bgImage = s.design?.bgImage || null;
 
   const [headingData, bodyData] = await Promise.all([loadFont(d.headingTtf), loadFont(d.bodyTtf)]);
   const fonts = [];
@@ -58,11 +57,7 @@ export async function GET(req) {
 
   const { text, accent } = d;
   const isGradient = (d.bg || "").includes("gradient");
-  const boardBg = bgImage
-    ? { backgroundImage: `url(${bgImage})`, backgroundSize: "cover", backgroundPosition: "center" }
-    : isGradient
-      ? { backgroundImage: d.bg }
-      : { backgroundColor: d.bg };
+  const boardBg = isGradient ? { backgroundImage: d.bg } : { backgroundColor: d.bg };
   const frame = FRAME_MAP(accent)[d.frame] || FRAME_MAP(accent).wood;
 
   const entreeRows = s.entrees.map((e) =>
@@ -116,22 +111,11 @@ export async function GET(req) {
       : h("div", {}),
   ];
 
-  let board;
-  if (bgImage) {
-    // AI chalkboard image: overlay text in a readable dark panel, inset within the painted frame.
-    const panel = h(
-      "div",
-      { style: { display: "flex", flexDirection: "column", flex: 1, borderRadius: 18, padding: "52px 58px", backgroundColor: "rgba(0,0,0,0.45)" } },
-      ...contentChildren
-    );
-    board = h("div", { style: { display: "flex", flex: 1, padding: "120px 100px", ...boardBg } }, panel);
-  } else {
-    board = h(
-      "div",
-      { style: { display: "flex", flexDirection: "column", flex: 1, borderRadius: 18, padding: "58px 66px", ...boardBg } },
-      ...contentChildren
-    );
-  }
+  const board = h(
+    "div",
+    { style: { display: "flex", flexDirection: "column", flex: 1, borderRadius: 18, padding: "58px 66px", ...boardBg } },
+    ...contentChildren
+  );
 
   const element = h(
     "div",
