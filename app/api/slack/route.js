@@ -3,7 +3,7 @@ import { after } from "next/server";
 import { getSpecial, getDraft, kvGet, kvSet } from "@/lib/store";
 import { normalizeSpecial, todayInCentral, RESTAURANT_NAME } from "@/lib/menu";
 import { aiConfigured } from "@/lib/ai";
-import { generateProof, publishDraft, runAgentTurn } from "@/lib/proof";
+import { generateProof, publishDraft, publishAndPostSocial, runAgentTurn } from "@/lib/proof";
 import { downloadSlackFile } from "@/lib/slackapi";
 import { recordDecision } from "@/lib/learning";
 
@@ -161,9 +161,31 @@ export async function POST(req) {
             body: JSON.stringify({
               replace_original: true,
               text: s
-                ? "✅ *Approved!* The board is updated now. It posts to Instagram & Facebook at 2:00 PM Central."
-                : "⚠️ Nothing to approve — that proof may have already been handled.",
+                ? "✅ *Accepted!* The board is live on the TV now. Tap 📲 *Post to Social* whenever you want it on Instagram & Facebook."
+                : "⚠️ Nothing to accept — that proof may have already been handled.",
             }),
+          });
+        });
+        return new Response("", { status: 200 });
+      }
+
+      if (action === "post_social") {
+        const result = await publishAndPostSocial();
+        after(async () => {
+          let text;
+          if (!result.published) {
+            text = "⚠️ Nothing to post — that proof may have already been handled.";
+          } else if (result.posted) {
+            text = "📲 *Posted to Instagram & Facebook* — and the board is live on the TV!";
+          } else if (!result.hookConfigured) {
+            text = "✅ Board is live on the TV. Social posting isn't connected yet — once the Make.com webhook is set up, this button posts straight to Instagram & Facebook.";
+          } else {
+            text = "✅ Board is live, but the social post didn't go through — check the Make.com webhook.";
+          }
+          await fetch(responseUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ replace_original: true, text }),
           });
         });
         return new Response("", { status: 200 });
